@@ -57,9 +57,25 @@ class Viego:
     that will give us "matchId" with that now we'll use MATCH-V5 to get items and champion played
     also we can use timeline to view what items were purchased first
     """
+
+
+    CONTINENTS_MAPPING = {
+        "br1": "americas",
+        "eun1": "europe",
+        "euw1": "europe",
+        "jp1": "asia",
+        "kr": "asia",
+        "la1": "americas",
+        "la2": "americas",
+        "na1": "americas",
+        "oc1": "sea",
+        "ru": "europe",
+    }
+
     def __init__(self, region):
         ### VARIABLES DECLARATION ###
-        self.region = region
+        self.region = region  # BR1, EUN1, EUW1, JP1, KR, LA1, LA2, NA1, OC1, RU
+        self.region_continent = Viego.CONTINENTS_MAPPING[region]
         ### API KEY RETRIVMENT ###
         with open("./api_key.txt") as f:  # api key needs to be secret!!!
             contents = f.readline()
@@ -138,7 +154,88 @@ class Viego:
             return
             pass
 
-    def match_v5_match_by_puuid(self,puuid, count=40)
+    def match_v5_match_by_puuid(self,puuid, count=40):
+
+        start_time = int(time.time()) - 604800 * 2  # two weeks from today
+
+        # url = f'https://{self.region_continent}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?queue=420&type=ranked&endTime={end_time}&count={count}&api_key={self.api_key}'
+        url = f"https://{self.region_continent}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?startTime={start_time}&endTime={int(time.time())}&queue=420&type=ranked&start=0&count={count}&api_key={self.api_key}"
+        try:
+            response = requests.get(url)
+
+            if len(response.json()) == 1:
+                print("[warning] did not found recent games")
+                return
+            if response.status_code != 200:
+                raise MATCHESError
+            print(f"[success] match list retrived")
+            return response.json()
+
+        except HTTPError as http_err:  #  some serious error like no internet, server error, bad url ec
+            print(f"[error] HTTP ERROR OCCURRED(SERIOUS): {http_err}")
+            pass
+
+        except MATCHESError:
+            print("[error] matches id ")
+            pass
+
+        except requests.exceptions.ConnectionError as e:
+            return 
+            pass
+        except Exception as e:
+            return
+            pass
+    
+    def match_v5_match_info_by_id(self, match_id):
+        url = f"https://{self.region_continent}.api.riotgames.com/lol/match/v5/matches/{match_id}?api_key={self.api_key}"
+        try:
+            response = requests.get(url)
+
+            if response.status_code != 200:
+                raise GETTINGMATCHError
+
+            print(f"[success] match info gotten")
+            return response.json()["info"]
+        except GETTINGMATCHError:
+            print("[error] could not get match info")
+
+        except HTTPError as http_err:  #  some serious error like no internet, server error, bad url ec
+            print(f"[error] HTTP ERROR OCCURRED(SERIOUS): {http_err}")
+            pass
+
+        except requests.exceptions.ConnectionError as e:
+            return 
+            pass
+        except Exception as e:
+            return
+            pass
+
+    def match_v5_timeline_by_id(self, match_id):
+        url = f'https://{self.region_continent}.api.riotgames.com/lol/match/v5/matches/{match_id}/timeline?api_key={self.api_key}'
+        try:
+            response = requests.get(url)
+
+            if response.status_code != 200:
+                raise GETTINGMATCHError
+
+            print(f"[success] match info gotten")
+            return response.json()
+        except GETTINGMATCHError:
+            print("[error] could not get match info")
+
+        except HTTPError as http_err:  #  some serious error like no internet, server error, bad url ec
+            print(f"[error] HTTP ERROR OCCURRED(SERIOUS): {http_err}")
+            pass
+
+        except requests.exceptions.ConnectionError as e:
+            return 
+            pass
+        except Exception as e:
+            return
+            pass
+
+
+
     
        
 
